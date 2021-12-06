@@ -1,68 +1,66 @@
-# :package_description
+# Laravel app settings stored in the database
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/:vendor_slug/:package_slug/run-tests?label=tests)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/:vendor_slug/:package_slug/Check%20&%20fix%20styling?label=code%20style)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Check+%26+fix+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/rpillz/laravel-settings.svg?style=flat-square)](https://packagist.org/packages/rpillz/laravel-settings)
+[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/rpillz/laravel-settings/run-tests?label=tests)](https://github.com/rpillz/laravel-settings/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/rpillz/laravel-settings/Check%20&%20fix%20styling?label=code%20style)](https://github.com/rpillz/laravel-settings/actions?query=workflow%3A"Check+%26+fix+styling"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/rpillz/laravel-settings.svg?style=flat-square)](https://packagist.org/packages/rpillz/laravel-settings)
 
----
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
+This package will set and get key-value settings from your Laravel app database. It was originally designed to work with a multi-tenant app, which is why the settings were stored in a database and not the standard config files.
 
-1. Press the "Use template" button at the top of this repo to create a new repo with the contents of this skeleton
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files
-3. Remove this block of text.
-4. Have fun creating your package.
-5. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+There are probably other packages which do a similar thing. You should probably use one of those. ;)
 
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require :vendor_slug/:package_slug
+composer require rpillz/laravel-settings
 ```
 
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug_without_prefix-migrations"
+php artisan vendor:publish --tag="settings-migrations"
 php artisan migrate
 ```
 
 You can publish the config file with:
 ```bash
-php artisan vendor:publish --tag=":package_slug_without_prefix-config"
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="example-views"
+php artisan vendor:publish --tag="settings-config"
 ```
 
 This is the contents of the published config file:
 
 ```php
 return [
+    // these default settings will be used if there is nothing saved in the database using the same key.
+    'defaults' => [
+
+        'default-key' => 'Default Value',
+        'is-this-true' => true,
+
+    ]
 ];
 ```
 
 ## Usage
 
+Primary usage is through a Facade.
+
 ```php
-$skeleton = new VendorName\Skeleton();
-echo $skeleton->echoPhrase('Hello, VendorName!');
+
+Settings::get('default-key'); // returns 'Default Value' from the config file.
+
+Settings::set('default-key', 'My New Value'); // updates this setting in the database.
+
+// Beware of cached values
+Settings::get('default-key'); // will still return the original 'Default Value'.
+
+// Get the latest value
+Settings::fresh('default-key');
+Settings::get('default-key', true); // passing a true with get() is the same as fresh()
+
+
 ```
 
 ## Testing
@@ -85,7 +83,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [:author_name](https://github.com/:author_username)
+- [Ryan Pilling](https://github.com/RPillz)
 - [All Contributors](../../contributors)
 
 ## License
