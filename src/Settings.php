@@ -32,8 +32,10 @@ class Settings
 
 
 
-        if ($type=='array'){
-            if (! is_array($value)) $value = [$value]; // convert string to array
+        if ($type == 'array') {
+            if (! is_array($value)) {
+                $value = [$value];
+            } // convert string to array
             $value = json_encode($value);
         } elseif ($type == 'json') {
             $value = json_encode($value);
@@ -96,9 +98,9 @@ class Settings
     /**
      * Get a setting value
      */
-    public function get(string $key, bool $fresh = false){
-
-        if (!$fresh && key_exists($key, $this->settings) ){
+    public function get(string $key, bool $fresh = false)
+    {
+        if (! $fresh && key_exists($key, $this->settings)) {
             return $this->settings[$key]; // return from cached array
         } else {
             return $this->fresh($key);
@@ -108,8 +110,9 @@ class Settings
     /**
      * Get a fresh setting value from the database
      */
-    public function fresh(string $key){
-        if ($setting = DB::table('settings')->where('key', $key)->first()){
+    public function fresh(string $key)
+    {
+        if ($setting = DB::table('settings')->where('key', $key)->first()) {
             $value = $this->cast($setting);
             $this->settings[$key] = $value;
         } elseif (isset($this->defaults[$key])) {
@@ -141,8 +144,9 @@ class Settings
         DB::table('settings')->where('key', $key)->delete();
     }
 
-    private function cast($setting){
-        if ($setting->type == 'string'){
+    private function cast($setting)
+    {
+        if ($setting->type == 'string') {
             return $setting->value;
         } elseif ($setting->type == 'boolean') {
             return boolval($setting->value);
@@ -169,9 +173,10 @@ class Settings
     {
         $setting = $this->get($key);
 
-        if (!is_array($setting)) $setting = $this->stringToArray($setting);
+        if (! is_array($setting)) {
+            $setting = $this->stringToArray($setting);
+        }
 
         return in_array($value, $setting);
-
     }
 }

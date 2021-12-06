@@ -29,15 +29,12 @@ it('can save an array and return an array', function () {
 });
 
 it('can take a single string and return an array', function () {
-
     Settings::set('single-array-test', 'one', 'array');
 
     expect(Settings::fresh('single-array-test'))->toEqual(['one']);
-
 });
 
 it('can set and delete a setting', function () {
-
     $key = 'here-for-a-good-time';
 
     Settings::set($key, 'not a long time');
@@ -48,11 +45,9 @@ it('can set and delete a setting', function () {
 
     expect(Settings::get($key))->toBeNull(); // not in cache
     expect(Settings::fresh($key))->toBeNull(); // not in db
-
 });
 
 it('can temporarily forget a setting', function () {
-
     $key = 'never-forget';
     $value = 'need cream for coffee';
 
@@ -64,6 +59,4 @@ it('can temporarily forget a setting', function () {
 
     expect(Settings::get($key))->toBeNull(); // not in cache
     expect(Settings::fresh($key))->toEqual($value); // but still in db
-
 });
-
