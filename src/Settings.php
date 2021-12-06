@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\DB;
 
 class Settings
 {
-
     protected $domain;
     protected $tenant;
     public $theme = null;
     public $settings = [];
     public $defaults = [];
 
-	public function __construct(){
+    public function __construct()
+    {
 
         // config()->set('app.url', 'http://'.$this->get('site_domain'));
         // config()->set('app.name', $this->get('site_title'));
@@ -21,16 +21,13 @@ class Settings
         // config()->set('mail.from.name', $this->get('site_title'));
 
         $this->defaults = config('settings.defaults', []);
-
-	}
-
+    }
 
     /**
      * Set a setting value
      */
     public function set($key, $value, $type = null): bool
     {
-
         $data = [];
 
 
@@ -38,17 +35,19 @@ class Settings
         if ($type=='array'){
             if (! is_array($value)) $value = [$value]; // convert string to array
             $value = json_encode($value);
-        } elseif ($type=='json'){
+        } elseif ($type == 'json') {
             $value = json_encode($value);
-        } elseif (is_array($value) && $type == 'csv'){
+        } elseif (is_array($value) && $type == 'csv') {
             $value = implode(',', $value);
-        } elseif (is_array($value)){
+        } elseif (is_array($value)) {
             $value = json_encode($value);
             $type = 'array';
         }
 
         $data['value'] = $value;
-        if ($type) $data['type'] = $type;
+        if ($type) {
+            $data['type'] = $type;
+        }
 
         $set = DB::table('settings')
             ->updateOrInsert(
@@ -57,7 +56,6 @@ class Settings
             );
 
         return $set;
-
     }
 
     /**
@@ -67,11 +65,11 @@ class Settings
     {
 
         // load up defaults
-        foreach($this->defaults as $key => $value){
+        foreach ($this->defaults as $key => $value) {
             $this->settings[$key] = $value;
         }
 
-        foreach (DB::table('settings')->get() as $setting){
+        foreach (DB::table('settings')->get() as $setting) {
             $this->settings[$setting->key] = $this->cast($setting);
         }
 
@@ -83,20 +81,16 @@ class Settings
      */
     public function raw(): array
     {
-
         $list = [];
-        foreach (DB::table('settings')->get() as $setting){
-
+        foreach (DB::table('settings')->get() as $setting) {
             $list[] = [
                 'key' => $setting->key,
                 'value' => $setting->value,
                 'type' => $setting->type,
             ];
-
         }
 
         return $list;
-
     }
 
     /**
@@ -109,7 +103,6 @@ class Settings
         } else {
             return $this->fresh($key);
         }
-
     }
 
     /**
@@ -119,7 +112,7 @@ class Settings
         if ($setting = DB::table('settings')->where('key', $key)->first()){
             $value = $this->cast($setting);
             $this->settings[$key] = $value;
-        } elseif (isset($this->defaults[$key])){
+        } elseif (isset($this->defaults[$key])) {
             $this->settings[$key] = $this->defaults[$key];
         } else {
             $this->settings[$key] = null;
@@ -151,13 +144,13 @@ class Settings
     private function cast($setting){
         if ($setting->type == 'string'){
             return $setting->value;
-        } elseif ($setting->type == 'boolean'){
+        } elseif ($setting->type == 'boolean') {
             return boolval($setting->value);
-        } elseif ($setting->type == 'csv'){
+        } elseif ($setting->type == 'csv') {
             return $this->stringToArray($setting->value);
-        } elseif ($setting->type == 'array'){
+        } elseif ($setting->type == 'array') {
             return json_decode($setting->value);
-        } elseif ($setting->type == 'json'){
+        } elseif ($setting->type == 'json') {
             return json_decode($setting->value);
         } else {
             return $setting->value;
@@ -168,6 +161,7 @@ class Settings
     {
         $array = explode(',', $value);
         $trimmed = array_map('trim', $array);
+
         return $trimmed;
     }
 
@@ -180,5 +174,4 @@ class Settings
         return in_array($value, $setting);
 
     }
-
 }

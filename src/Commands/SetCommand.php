@@ -13,7 +13,6 @@ class SetCommand extends Command
 
     public function handle(): int
     {
-
         $key = $this->argument('key');
 
         $value = $this->argument('value');
