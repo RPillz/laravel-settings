@@ -2,9 +2,9 @@
 
 namespace RPillz\Settings;
 
+use RPillz\Settings\Commands\SetCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use RPillz\Settings\Commands\SetCommand;
 
 class SettingsServiceProvider extends PackageServiceProvider
 {
