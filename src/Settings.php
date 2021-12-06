@@ -25,6 +25,9 @@ class Settings
 	}
 
 
+    /**
+     * Set a setting value
+     */
     public function set($key, $value, $type = null): bool
     {
 
@@ -33,6 +36,7 @@ class Settings
 
 
         if ($type=='array'){
+            if (! is_array($value)) $value = [$value]; // convert string to array
             $value = json_encode($value);
         } elseif ($type=='json'){
             $value = json_encode($value);
@@ -56,6 +60,9 @@ class Settings
 
     }
 
+    /**
+     * Get all settings
+     */
     public function all(): array
     {
 
@@ -71,6 +78,9 @@ class Settings
         return $this->settings;
     }
 
+    /**
+     * Get all setting data stored in db
+     */
     public function raw(): array
     {
 
@@ -89,9 +99,12 @@ class Settings
 
     }
 
+    /**
+     * Get a setting value
+     */
     public function get(string $key, bool $fresh = false){
 
-        if (!$fresh && isset($this->settings[$key])){
+        if (!$fresh && key_exists($key, $this->settings) ){
             return $this->settings[$key]; // return from cached array
         } else {
             return $this->fresh($key);
@@ -99,6 +112,9 @@ class Settings
 
     }
 
+    /**
+     * Get a fresh setting value from the database
+     */
     public function fresh(string $key){
         if ($setting = DB::table('settings')->where('key', $key)->first()){
             $value = $this->cast($setting);
@@ -110,6 +126,26 @@ class Settings
         }
 
         return $this->settings[$key];
+    }
+
+    /**
+     * Forget a setting temporarily
+     *
+     */
+    public function forget(string $key): void
+    {
+        $this->settings[$key] = null; // temporarily forgets this setting, but it's still in the db.
+    }
+
+    /**
+     * Delete a setting permanently
+     *
+     */
+    public function delete(string $key): void
+    {
+        unset($this->settings[$key]);
+
+        DB::table('settings')->where('key', $key)->delete();
     }
 
     private function cast($setting){
@@ -138,12 +174,11 @@ class Settings
     public function in(string $key, $value)
     {
         $setting = $this->get($key);
+
         if (!is_array($setting)) $setting = $this->stringToArray($setting);
-        if (is_array($setting)){
-            return in_array($value, $setting);
-        } else {
-            return null;
-        }
+
+        return in_array($value, $setting);
+
     }
 
 }

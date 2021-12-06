@@ -63,6 +63,30 @@ Settings::get('default-key', true); // passing a true with get() is the same as 
 
 ```
 
+You can add setting values with different type casts.
+
+```php
+
+Settings::set('default-key', 'My New Value', 'string'); // string is default. What goes in is what comes out.
+
+Settings::set('default-key', 'My New Value', 'array'); // convert string into single array value
+
+Settings::set('numbers', 'one, two, three', 'csv'); // convert csv string into array
+
+Settings::set('is_active', 1, 'boolean'); // convert value into boolean
+
+```
+
+You can remove settings.
+
+```php
+
+Settings::forget('this-setting'); // temporarily nulls in the settings cache (for current page load only)
+
+Settings::delete('this-setting'); // removes setting from the cache and the database.
+
+```
+
 ## Testing
 
 ```bash
