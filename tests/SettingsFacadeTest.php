@@ -58,12 +58,37 @@ it('can temporarily forget a setting', function () {
 
     Settings::set($key, $value);
 
-    expect(Settings::fresh($key))->toEqual($value);
+    expect(Settings::get($key))->toEqual($value);
 
     Settings::forget($key);
 
-    expect(Settings::get($key))->toBeNull(); // not in cache
+    expect(Settings::getCache($key))->toBeNull(); // not in cache
     expect(Settings::fresh($key))->toEqual($value); // but still in db
+
+});
+
+it('can set data for a model', function() {
+
+    $key = 'model-test';
+    $value = 'this';
+    $model = $this->testUser;
+
+    Settings::for($model)->set($key, $value);
+
+    expect(Settings::for($model)->get($key))->toEqual($value);
+
+});
+
+it('can set data for a model, different from base setting', function() {
+
+    $key = 'this-setting-is';
+    $model = $this->testUser;
+
+    Settings::set($key, 'on base');
+    Settings::for($model)->set($key, 'on model');
+
+    expect(Settings::fresh($key))->toEqual('on base');
+    expect(Settings::for($model)->fresh($key))->toEqual('on model');
 
 });
 

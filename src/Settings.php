@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\DB;
 
 class Settings
 {
-    protected $domain;
-    protected $tenant;
+    protected $settable_type = null;
+    protected $settable_id = null;
+    protected $settable_key = null;
     public $theme = null;
-    public $settings = [];
+    public $base_settings = [];
+    public $model_settings = [];
     public $defaults = [];
 
     public function __construct()
@@ -30,8 +32,6 @@ class Settings
     {
         $data = [];
 
-
-
         if ($type=='array'){
             if (! is_array($value)) $value = [$value]; // convert string to array
             $value = json_encode($value);
@@ -49,13 +49,21 @@ class Settings
             $data['type'] = $type;
         }
 
-        $set = DB::table('settings')
+        DB::table('settings')
             ->updateOrInsert(
-                ['key' => $key],
+                [
+                    'settable_type' => $this->settable_type,
+                    'settable_id' => $this->settable_id,
+                    'key' => $key,
+                ],
                 $data
             );
 
-        return $set;
+        $this->setCache($key, $this->cast($value, $type) );
+
+        $this->clearModel();
+
+        return true;
     }
 
     /**
@@ -66,14 +74,19 @@ class Settings
 
         // load up defaults
         foreach ($this->defaults as $key => $value) {
-            $this->settings[$key] = $value;
+            $this->setCache($key, $value);
         }
 
-        foreach (DB::table('settings')->get() as $setting) {
-            $this->settings[$setting->key] = $this->cast($setting);
+        foreach (DB::table('settings')->where([
+            'settable_type' => $this->settable_type,
+            'settable_id' => $this->settable_id,
+        ])->get() as $setting) {
+            $this->setCache($setting->key, $this->cast($setting->value, $setting->type));
         }
 
-        return $this->settings;
+        $this->clearModel();
+
+        return $this->cacheArray();
     }
 
     /**
@@ -82,7 +95,10 @@ class Settings
     public function raw(): array
     {
         $list = [];
-        foreach (DB::table('settings')->get() as $setting) {
+        foreach (DB::table('settings')->where([
+            'settable_type' => $this->settable_type,
+            'settable_id' => $this->settable_id,
+        ])->get() as $setting) {
             $list[] = [
                 'key' => $setting->key,
                 'value' => $setting->value,
@@ -90,35 +106,74 @@ class Settings
             ];
         }
 
+        $this->clearModel();
+
         return $list;
+    }
+
+    /**
+     * Fluent function to set a related model
+     */
+    public function for($model): self
+    {
+        $this->settable_type = $model->getMorphClass();
+        $this->settable_id = $model->getKey();
+        $this->settable_key = $this->settable_type.'-'.$this->settable_id;
+
+        return $this;
+    }
+
+    /**
+     * Unset the model after a query
+     */
+    protected function clearModel(): void
+    {
+        $this->settable_type = null;
+        $this->settable_id = null;
+        $this->settable_key = null;
     }
 
     /**
      * Get a setting value
      */
-    public function get(string $key, bool $fresh = false){
+    public function get(string $key, bool $fresh = false): mixed
+    {
 
-        if (!$fresh && key_exists($key, $this->settings) ){
-            return $this->settings[$key]; // return from cached array
+        if (! $fresh && $this->isCached($key) ){
+            $value = $this->getCache($key); // return from cached array
         } else {
-            return $this->fresh($key);
+            $value = $this->fresh($key);
         }
+
+        $this->clearModel();
+
+        return $value;
+
     }
 
     /**
      * Get a fresh setting value from the database
      */
     public function fresh(string $key){
-        if ($setting = DB::table('settings')->where('key', $key)->first()){
-            $value = $this->cast($setting);
-            $this->settings[$key] = $value;
-        } elseif (isset($this->defaults[$key])) {
-            $this->settings[$key] = $this->defaults[$key];
+        if ($setting = DB::table('settings')->where([
+                'settable_type' => $this->settable_type,
+                'settable_id' => $this->settable_id,
+                'key' => $key,
+            ])->first()){
+
+            $value = $this->cast($setting->value, $setting->type);
+
+        } elseif (key_exists($key, $this->defaults)) {
+            $value = $this->defaults[$key];
         } else {
-            $this->settings[$key] = null;
+            $value = null;
         }
 
-        return $this->settings[$key];
+        $this->setCache($key, $value);
+
+        $this->clearModel();
+
+        return $value;
     }
 
     /**
@@ -127,7 +182,7 @@ class Settings
      */
     public function forget(string $key): void
     {
-        $this->settings[$key] = null; // temporarily forgets this setting, but it's still in the db.
+        $this->clearCache($key);
     }
 
     /**
@@ -136,24 +191,30 @@ class Settings
      */
     public function delete(string $key): void
     {
-        unset($this->settings[$key]);
+        $this->clearCache($key);
 
-        DB::table('settings')->where('key', $key)->delete();
+        DB::table('settings')->where([
+            'settable_type' => $this->settable_type,
+            'settable_id' => $this->settable_id,
+            'key' => $key,
+        ])->delete();
+
+        $this->clearModel();
     }
 
-    private function cast($setting){
-        if ($setting->type == 'string'){
-            return $setting->value;
-        } elseif ($setting->type == 'boolean') {
-            return boolval($setting->value);
-        } elseif ($setting->type == 'csv') {
-            return $this->stringToArray($setting->value);
-        } elseif ($setting->type == 'array') {
-            return json_decode($setting->value);
-        } elseif ($setting->type == 'json') {
-            return json_decode($setting->value);
+    private function cast(string $value, ?string $type = null){
+        if ($type == 'string'){
+            return $value;
+        } elseif ($type == 'boolean') {
+            return boolval($value);
+        } elseif ($type == 'csv') {
+            return $this->stringToArray($value);
+        } elseif ($type == 'array') {
+            return json_decode($value);
+        } elseif ($type == 'json') {
+            return json_decode($value);
         } else {
-            return $setting->value;
+            return $value;
         }
     }
 
@@ -174,4 +235,75 @@ class Settings
         return in_array($value, $setting);
 
     }
+
+    protected function isCached($key): bool
+    {
+
+        if (! is_null($this->settable_key) ){
+            if (! key_exists($this->settable_key, $this->model_settings)) return false;
+            return key_exists($key, $this->model_settings[$this->settable_key]);
+        }
+
+        return key_exists($key, $this->base_settings);
+
+    }
+
+    protected function cacheArray(): array
+    {
+        if (! is_null($this->settable_key) ){
+            if (! key_exists($this->settable_key, $this->model_settings)){
+                $this->model_settings[$this->settable_key] = []; // new array
+            }
+            return $this->model_settings[$this->settable_key];
+        }
+
+        return $this->base_settings;
+    }
+
+    public function getCache($key): mixed
+    {
+
+        if (! $this->isCached($key)) return null;
+
+        if (! is_null($this->settable_key) ){
+            return $this->model_settings[$this->settable_key][$key];
+        }
+
+        return $this->base_settings[$key];
+    }
+
+    protected function setCache($key, $value): void
+    {
+
+        if (! is_null($this->settable_key) ){
+            if (! key_exists($this->settable_key, $this->model_settings)){
+                $this->model_settings[$this->settable_key] = []; // new array
+            }
+            $this->model_settings[$this->settable_key][$key] = $value;
+        } else {
+            $this->base_settings[$key] = $value;
+        }
+
+    }
+
+    protected function clearCache($key): void
+    {
+
+        if (! is_null($this->settable_key) ){
+            unset($this->model_settings[$this->settable_key][$key]);
+        } else {
+            unset($this->base_settings[$key]);
+        }
+
+    }
+
+    /**
+     * Dump the cache for debugging
+     */
+    public function dumpCache(): void
+    {
+        dump($this->base_settings);
+        dump($this->model_settings);
+    }
+
 }

@@ -12,9 +12,10 @@ return new class extends Migration
             $table->string('key')->required();
             $table->text('value')->nullable();
             $table->string('type')->default('string');
+            $table->nullableUuidMorphs('settable');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-            $table->primary('key');
+            $table->primary(['key', 'settable_type', 'settable_id']);
         });
     }
 };

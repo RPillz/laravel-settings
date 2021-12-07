@@ -2,12 +2,16 @@
 
 namespace RPillz\Settings\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
+use Illuminate\Database\Schema\Blueprint;
 use RPillz\Settings\SettingsServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TestCase extends Orchestra
 {
+
+    protected $testUser;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -15,6 +19,11 @@ class TestCase extends Orchestra
         // Factory::guessFactoryNamesUsing(
         //     fn (string $modelName) => 'RPillz\\Settings\\Database\\Factories\\'.class_basename($modelName).'Factory'
         // );
+
+        $this->setUpDatabase($this->app);
+
+        $this->testUser = User::where('email', 'test@example.com')->first();
+
     }
 
     protected function getPackageProviders($app)
@@ -31,4 +40,17 @@ class TestCase extends Orchestra
         $migration = include __DIR__.'/../database/migrations/create_settings_table.php.stub';
         $migration->up();
     }
+
+    protected function setUpDatabase($app)
+    {
+        // fake users table
+        $app['db']->connection()->getSchemaBuilder()->create('users', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('email');
+            $table->softDeletes();
+        });
+
+        User::create(['email' => 'test@example.com']);
+    }
+
 }
