@@ -32,8 +32,10 @@ class Settings
     {
         $data = [];
 
-        if ($type=='array'){
-            if (! is_array($value)) $value = [$value]; // convert string to array
+        if ($type == 'array') {
+            if (! is_array($value)) {
+                $value = [$value];
+            } // convert string to array
             $value = json_encode($value);
         } elseif ($type == 'json') {
             $value = json_encode($value);
@@ -59,7 +61,7 @@ class Settings
                 $data
             );
 
-        $this->setCache($key, $this->cast($value, $type) );
+        $this->setCache($key, $this->cast($value, $type));
 
         $this->clearModel();
 
@@ -138,8 +140,7 @@ class Settings
      */
     public function get(string $key, bool $fresh = false): mixed
     {
-
-        if (! $fresh && $this->isCached($key) ){
+        if (! $fresh && $this->isCached($key)) {
             $value = $this->getCache($key); // return from cached array
         } else {
             $value = $this->fresh($key);
@@ -148,21 +149,19 @@ class Settings
         $this->clearModel();
 
         return $value;
-
     }
 
     /**
      * Get a fresh setting value from the database
      */
-    public function fresh(string $key){
+    public function fresh(string $key)
+    {
         if ($setting = DB::table('settings')->where([
                 'settable_type' => $this->settable_type,
                 'settable_id' => $this->settable_id,
                 'key' => $key,
-            ])->first()){
-
+            ])->first()) {
             $value = $this->cast($setting->value, $setting->type);
-
         } elseif (key_exists($key, $this->defaults)) {
             $value = $this->defaults[$key];
         } else {
@@ -202,8 +201,9 @@ class Settings
         $this->clearModel();
     }
 
-    private function cast(string $value, ?string $type = null){
-        if ($type == 'string'){
+    private function cast(string $value, ?string $type = null)
+    {
+        if ($type == 'string') {
             return $value;
         } elseif ($type == 'boolean') {
             return boolval($value);
@@ -239,22 +239,24 @@ class Settings
 
     protected function isCached($key): bool
     {
+        if (! is_null($this->settable_key)) {
+            if (! key_exists($this->settable_key, $this->model_settings)) {
+                return false;
+            }
 
-        if (! is_null($this->settable_key) ){
-            if (! key_exists($this->settable_key, $this->model_settings)) return false;
             return key_exists($key, $this->model_settings[$this->settable_key]);
         }
 
         return key_exists($key, $this->base_settings);
-
     }
 
     protected function cacheArray(): array
     {
-        if (! is_null($this->settable_key) ){
-            if (! key_exists($this->settable_key, $this->model_settings)){
+        if (! is_null($this->settable_key)) {
+            if (! key_exists($this->settable_key, $this->model_settings)) {
                 $this->model_settings[$this->settable_key] = []; // new array
             }
+
             return $this->model_settings[$this->settable_key];
         }
 
@@ -263,10 +265,11 @@ class Settings
 
     public function getCache($key): mixed
     {
+        if (! $this->isCached($key)) {
+            return null;
+        }
 
-        if (! $this->isCached($key)) return null;
-
-        if (! is_null($this->settable_key) ){
+        if (! is_null($this->settable_key)) {
             return $this->model_settings[$this->settable_key][$key];
         }
 
@@ -275,27 +278,23 @@ class Settings
 
     protected function setCache($key, $value): void
     {
-
-        if (! is_null($this->settable_key) ){
-            if (! key_exists($this->settable_key, $this->model_settings)){
+        if (! is_null($this->settable_key)) {
+            if (! key_exists($this->settable_key, $this->model_settings)) {
                 $this->model_settings[$this->settable_key] = []; // new array
             }
             $this->model_settings[$this->settable_key][$key] = $value;
         } else {
             $this->base_settings[$key] = $value;
         }
-
     }
 
     protected function clearCache($key): void
     {
-
-        if (! is_null($this->settable_key) ){
+        if (! is_null($this->settable_key)) {
             unset($this->model_settings[$this->settable_key][$key]);
         } else {
             unset($this->base_settings[$key]);
         }
-
     }
 
     /**
@@ -306,5 +305,4 @@ class Settings
         dump($this->base_settings);
         dump($this->model_settings);
     }
-
 }

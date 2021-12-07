@@ -2,14 +2,13 @@
 
 namespace RPillz\Settings\Tests;
 
-use Illuminate\Database\Schema\Blueprint;
-use RPillz\Settings\SettingsServiceProvider;
-use Orchestra\Testbench\TestCase as Orchestra;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Schema\Blueprint;
+use Orchestra\Testbench\TestCase as Orchestra;
+use RPillz\Settings\SettingsServiceProvider;
 
 class TestCase extends Orchestra
 {
-
     protected $testUser;
 
     protected function setUp(): void
@@ -23,7 +22,6 @@ class TestCase extends Orchestra
         $this->setUpDatabase($this->app);
 
         $this->testUser = User::where('email', 'test@example.com')->first();
-
     }
 
     protected function getPackageProviders($app)
@@ -52,5 +50,4 @@ class TestCase extends Orchestra
 
         User::create(['email' => 'test@example.com']);
     }
-
 }

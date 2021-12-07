@@ -61,8 +61,7 @@ it('can temporarily forget a setting', function () {
     expect(Settings::fresh($key))->toEqual($value); // but still in db
 });
 
-it('can set data for a model', function() {
-
+it('can set data for a model', function () {
     $key = 'model-test';
     $value = 'this';
     $model = $this->testUser;
@@ -70,11 +69,9 @@ it('can set data for a model', function() {
     Settings::for($model)->set($key, $value);
 
     expect(Settings::for($model)->get($key))->toEqual($value);
-
 });
 
-it('can set data for a model, different from base setting', function() {
-
+it('can set data for a model, different from base setting', function () {
     $key = 'this-setting-is';
     $model = $this->testUser;
 
@@ -83,6 +80,4 @@ it('can set data for a model, different from base setting', function() {
 
     expect(Settings::fresh($key))->toEqual('on base');
     expect(Settings::for($model)->fresh($key))->toEqual('on model');
-
 });
-
