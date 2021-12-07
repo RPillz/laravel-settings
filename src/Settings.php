@@ -230,10 +230,11 @@ class Settings
     {
         $setting = $this->get($key);
 
-        if (!is_array($setting)) $setting = $this->stringToArray($setting);
+        if (! is_array($setting)) {
+            $setting = $this->stringToArray($setting);
+        }
 
         return in_array($value, $setting);
-
     }
 
     protected function isCached($key): bool
