@@ -17,7 +17,6 @@ class Settings
 
     public function __construct()
     {
-
         // config()->set('app.url', 'http://'.$this->get('site_domain'));
         // config()->set('app.name', $this->get('site_title'));
         // config()->set('mail.from.address', $this->get('email'));
@@ -74,7 +73,6 @@ class Settings
      */
     public function all(): array
     {
-
         // load up defaults
         foreach ($this->defaults as $key => $value) {
             $this->setCache($key, $value);
@@ -132,12 +130,10 @@ class Settings
      */
     protected function clearModel(): void
     {
-        if (!$this->settable_sticky){
-
+        if (! $this->settable_sticky) {
             $this->settable_type = 'default';
             $this->settable_id = 0;
             $this->settable_key = 'default-0';
-
         }
     }
 
@@ -218,8 +214,9 @@ class Settings
         $this->clearModel();
     }
 
-    private function cast(?string $value, ?string $type = null){
-        if ($type == 'string'){
+    private function cast(?string $value, ?string $type = null)
+    {
+        if ($type == 'string') {
             return $value;
         } elseif ($type == 'boolean') {
             return boolval($value);
