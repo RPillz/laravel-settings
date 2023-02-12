@@ -11,9 +11,17 @@ it('can get a single default setting from config', function () {
 });
 
 it('can update setting to new value', function () {
+
     Settings::set('default-key', 'New Value');
 
     expect(Settings::fresh('default-key'))->toEqual('New Value');
+});
+
+it('can set a value to null', function () {
+
+    Settings::set('default-key', null);
+
+    expect(Settings::fresh('default-key'))->toBeNull();
 });
 
 it('can save a csv and return an array', function () {
@@ -83,6 +91,38 @@ it('can set data for a model, different from base setting', function() {
 
     expect(Settings::fresh($key))->toEqual('on base');
     expect(Settings::for($model)->fresh($key))->toEqual('on model');
+
+});
+
+it('forgets the last model set with for()', function() {
+
+    $key = 'this-setting-is';
+    $model = $this->testUser;
+
+    Settings::set($key, 'on base');
+    Settings::for($model)->set($key, 'on model');
+    Settings::set($key, 'back on base');
+
+    expect(Settings::fresh($key))->toEqual('back on base');
+    expect(Settings::for($model)->fresh($key))->toEqual('on model');
+
+});
+
+it('can remember and forget a sticky model.', function() {
+
+    $key = 'this-setting-is';
+    $model = $this->testUser;
+
+    Settings::set($key, 'on base');
+    Settings::for($model, true)->set($key, 'on model');
+    Settings::set($key, 'still on model');
+
+    expect(Settings::fresh($key))->toEqual('still on model');
+    expect(Settings::for($model)->fresh($key))->toEqual('still on model');
+
+    Settings::resetModel();
+
+    expect(Settings::fresh($key))->toEqual('on base');
 
 });
 

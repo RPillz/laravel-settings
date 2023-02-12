@@ -87,6 +87,28 @@ Settings::delete('this-setting'); // removes setting from the cache and the data
 
 ```
 
+Use the fluent for() function to set things for a specific model. You may use this for unique settings, or to override defaults.
+
+```php
+
+Settings::set('this-setting-is', 'on base');
+
+Settings::for($model)->set('this-setting-is', 'on model');
+
+```
+
+Note that the for() function can be made "sticky" by passing true as the second argument and all uses of settings after will maintain the set model.
+
+```php
+
+Settings::for($model, true)->set('this-setting-is', 'on model');
+
+Settings::set('this-setting-is', 'still on model');
+
+Settings::resetModel(); // to clear out the sticky model.
+
+```
+
 ## Testing
 
 ```bash

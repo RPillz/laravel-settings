@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\DB;
 
 class Settings
 {
-    protected $settable_type = null;
-    protected $settable_id = null;
-    protected $settable_key = null;
+    protected $settable_type = 'default';
+    protected $settable_id = 0;
+    protected $settable_key = 'default-0';
+    protected $settable_sticky = false;
     public $theme = null;
     public $base_settings = [];
     public $model_settings = [];
@@ -114,11 +115,12 @@ class Settings
     /**
      * Fluent function to set a related model
      */
-    public function for($model): self
+    public function for($model, $sticky = false): self
     {
         $this->settable_type = $model->getMorphClass();
         $this->settable_id = $model->getKey();
         $this->settable_key = $this->settable_type.'-'.$this->settable_id;
+        $this->settable_sticky = $sticky;
 
         return $this;
     }
@@ -128,9 +130,24 @@ class Settings
      */
     protected function clearModel(): void
     {
-        $this->settable_type = null;
-        $this->settable_id = null;
-        $this->settable_key = null;
+        if (!$this->settable_sticky){
+
+            $this->settable_type = 'default';
+            $this->settable_id = 0;
+            $this->settable_key = 'default-0';
+
+        }
+    }
+
+    /**
+     * Unset the model after a sticky query
+     */
+    public function resetModel(): void
+    {
+        $this->settable_type = 'default';
+        $this->settable_id = 0;
+        $this->settable_key = 'default-0';
+        $this->settable_sticky = false;
     }
 
     /**
@@ -202,7 +219,7 @@ class Settings
         $this->clearModel();
     }
 
-    private function cast(string $value, ?string $type = null){
+    private function cast(?string $value, ?string $type = null){
         if ($type == 'string'){
             return $value;
         } elseif ($type == 'boolean') {
@@ -218,7 +235,7 @@ class Settings
         }
     }
 
-    private function stringToArray(string $value): array
+    private function stringToArray(?string $value): array
     {
         $array = explode(',', $value);
         $trimmed = array_map('trim', $array);
